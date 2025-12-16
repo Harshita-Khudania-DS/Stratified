@@ -1,0 +1,127 @@
+---
+title: "2341439_stratified"
+author: "Harshita Khudania"
+date: "2025-12-16"
+output: word_document
+---
+
+```{r}
+# ============================================================
+# STRATIFIED SAMPLING: SAMPLE SIZE DETERMINATION
+# Proportional, Neyman & Optimised Allocation
+# ============================================================
+
+# Clear workspace
+rm(list = ls())
+
+# ------------------------------------------------------------
+# 1. INPUT DATA (STRATA INFORMATION)
+# ------------------------------------------------------------
+
+strata_data <- data.frame(
+  Stratum = c("A", "B", "C"),
+  Nh = c(300, 500, 200),        # Population size in each stratum
+  Sh = c(12, 20, 15),           # Std deviation in each stratum
+  Cost = c(1, 2, 3)             # Cost / Time per unit in each stratum
+)
+
+# Total population
+N <- sum(strata_data$Nh)
+
+# Stratum weights
+strata_data$Wh <- strata_data$Nh / N
+
+# ------------------------------------------------------------
+# 2. PRECISION & CONFIDENCE SETTINGS
+# ------------------------------------------------------------
+
+d <- 2                # Allowable error (sampling bias)
+confidence_level <- 0.95
+Z <- qnorm((1 + confidence_level) / 2)
+
+cat("Confidence Level:", confidence_level * 100, "%\n")
+cat("Z value:", round(Z, 4), "\n")
+cat("Allowable Error (d):", d, "\n\n")
+
+# ------------------------------------------------------------
+# 3. PROPORTIONAL ALLOCATION
+# ------------------------------------------------------------
+
+# Required sample size
+n_prop <- (Z^2 * sum(strata_data$Wh * strata_data$Sh^2)) / d^2
+n_prop <- ceiling(n_prop)
+
+# Allocation
+strata_data$n_prop <- round(n_prop * strata_data$Wh)
+
+cat("PROPORTIONAL ALLOCATION\n")
+cat("Total Sample Size (n):", n_prop, "\n\n")
+
+# ------------------------------------------------------------
+# 4. NEYMAN ALLOCATION
+# ------------------------------------------------------------
+
+# Required sample size
+n_neyman <- (Z^2 * (sum(strata_data$Wh * strata_data$Sh))^2) / d^2
+n_neyman <- ceiling(n_neyman)
+
+# Allocation
+strata_data$n_neyman <- round(
+  n_neyman * (strata_data$Wh * strata_data$Sh) /
+    sum(strata_data$Wh * strata_data$Sh)
+)
+
+cat("NEYMAN ALLOCATION\n")
+cat("Total Sample Size (n):", n_neyman, "\n\n")
+
+# ------------------------------------------------------------
+# 5. OPTIMISED (COST / TIME BASED) ALLOCATION
+# ------------------------------------------------------------
+
+# Required sample size
+n_opt <- (Z^2 * (sum(strata_data$Wh * strata_data$Sh * sqrt(strata_data$Cost)))^2) / d^2
+n_opt <- ceiling(n_opt)
+
+# Allocation
+strata_data$n_opt <- round(
+  n_opt * (strata_data$Wh * strata_data$Sh / sqrt(strata_data$Cost)) /
+    sum(strata_data$Wh * strata_data$Sh / sqrt(strata_data$Cost))
+)
+
+cat("OPTIMISED ALLOCATION (COST/TIME BASED)\n")
+cat("Total Sample Size (n):", n_opt, "\n\n")
+
+# ------------------------------------------------------------
+# 6. SUMMARY TABLE
+# ------------------------------------------------------------
+
+summary_table <- strata_data[, c("Stratum", "Nh", "Sh", "Cost",
+                                 "n_prop", "n_neyman", "n_opt")]
+
+cat("SUMMARY OF STRATUM-WISE SAMPLE ALLOCATION\n")
+print(summary_table)
+
+# ------------------------------------------------------------
+# 7. VISUAL COMPARISON
+# ------------------------------------------------------------
+
+par(mfrow = c(1, 3))
+
+barplot(strata_data$n_prop,
+        names.arg = strata_data$Stratum,
+        main = "Proportional Allocation",
+        ylab = "Sample Size")
+
+barplot(strata_data$n_neyman,
+        names.arg = strata_data$Stratum,
+        main = "Neyman Allocation",
+        ylab = "Sample Size")
+
+barplot(strata_data$n_opt,
+        names.arg = strata_data$Stratum,
+        main = "Optimised Allocation",
+        ylab = "Sample Size")
+
+par(mfrow = c(1, 1))
+
+```
